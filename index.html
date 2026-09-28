@@ -94,6 +94,9 @@
   .poof b { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; background: #ffd23f;
             clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%); }
   .flycube { position: absolute; z-index: 3; pointer-events: none; }
+  .mathnote { position: relative; z-index: 2; margin-bottom: auto; margin-top: 4px; background: rgba(255,255,255,.9); border-radius: 14px; padding: 3px 14px;
+              font-weight: 800; font-size: 20px; color: var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,.08); }
+  .mathnote b { color: #e8590c; }
   .bird { position: absolute; left: 0; z-index: 0; pointer-events: none; will-change: transform;
           animation: fly var(--dur, 11s) linear forwards; }
   .bird .bob { animation: birdbob 1.6s ease-in-out infinite; }
@@ -561,7 +564,107 @@
     if (bots.length !== 2) return null;
     if (op === '+' && a > 0 && b > 0) return () => animateAdd(bots, a, b, result);
     if (op === '-' && b > 0 && result >= 0) return () => animateSub(bots, a, b, result);
+    if (op === '*' && a >= 1 && a <= 10 && b >= 1 && b <= 99) return () => animateMul(bots, a, b, result);
+    if (op === '/' && b >= 1 && b <= 10 && a >= 1 && a <= 99 && a % b === 0) return () => animateDiv(bots, a, b, result);
     return null;
+  }
+  // Each group gets its own cube color so kids can see the groups.
+  const GROUP_COLORS = [['#ff8a3d', '#d9601a'], ['#4dabf7', '#1c7ed6'], ['#69db7c', '#2f9e44'], ['#b197fc', '#7048e8'], ['#f783ac', '#d6336c'],
+                        ['#ffd23f', '#e0a800'], ['#3bc9db', '#1098ad'], ['#ff6b6b', '#e03131'], ['#a9e34b', '#66a80f'], ['#e599f7', '#ae3ec9']];
+  function paintCube(c, g) { const [bg, bd] = GROUP_COLORS[g % GROUP_COLORS.length]; c.style.background = bg; c.style.borderColor = bd; }
+  function colorGroups(root, size) { [...root.querySelectorAll('.tower .cube')].forEach((c, i) => paintCube(c, Math.floor(i / size))); }
+  const noteEl = html => { const n = el('mathnote'); n.innerHTML = html; return n; };
+  const countClip = n => n <= 9 ? 'd' + n : 'w' + n;
+  // Several robots jump into the middle and vanish in a puff. Resolves at the puff.
+  async function jumpTogether(robots) {
+    const rects = robots.map(r => r.getBoundingClientRect()), s = sceneScale(robots[0]);
+    const midX = rects.reduce((t, r) => t + (r.left + r.right) / 2, 0) / rects.length;
+    const midY = Math.min(...rects.map(r => (r.top + r.bottom) / 2));
+    robots.forEach(r => { r.classList.remove('idle', 'hop'); r.querySelector('.bubble')?.remove(); });
+    setTimeout(() => { sweep(220, 660, .3); sweep(260, 780, .3, 'triangle', .08); }, 150);
+    await Promise.all(robots.map((r, i) => {
+      const d = (midX - (rects[i].left + rects[i].right) / 2) / s;
+      return r.animate([
+        { transform: 'translate(0,0) scale(1,1)' },
+        { transform: 'translate(0,8px) scale(1.1,.85)', offset: .18 },
+        { transform: `translate(${d * .45}px,-45px) scale(.95,1.08) rotate(${d > 0 ? 12 : d < 0 ? -12 : 0}deg)`, offset: .55 },
+        { transform: `translate(${d}px,-20px) scale(.55)`, opacity: .9, offset: .92 },
+        { transform: `translate(${d}px,-20px) scale(.3)`, opacity: 0 }], { duration: 950, easing: 'ease-in-out', fill: 'forwards' }).finished;
+    }));
+    poofAt(midX, midY); poofSound();
+  }
+  // Times: "3 × 2" = 3 robots holding 2 each pop in (counted out loud), then they jump together into one robot of 6.
+  async function animateMul([A, B], a, b, result) {
+    const sign = blocksEl.querySelector('.opsign');
+    [A, B].forEach(x => { x.classList.remove('idle', 'hop'); x.querySelector('.bubble')?.remove(); });
+    sign?.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.2) rotate(90deg)' }], { duration: 300, fill: 'forwards' });
+    await Promise.all([A, B].map(x => x.animate([{ transform: 'none', opacity: 1 }, { transform: 'scale(.3)', opacity: 0 }], { duration: 400, fill: 'forwards' }).finished));
+    scene([]);
+    blocksEl.insertBefore(noteEl(`${a} group${a === 1 ? '' : 's'} of <b>${b}</b>`), blocksEl.firstChild);
+    const wrap = blocksEl.querySelector('.fit'), copies = [];
+    const gap = Math.max(320, 760 - a * 45);
+    for (let i = 0; i < a; i++) {
+      const bot = makeBot(buildNumber(b, false), { idx: i, tag: String(b) });
+      bot.classList.remove('idle');
+      colorGroups(bot, 1000); bot.querySelectorAll('.tower .cube').forEach(c => paintCube(c, i));
+      bot.querySelectorAll('.appear').forEach(e => e.classList.remove('appear'));
+      wrap.appendChild(bot); copies.push(bot); fitScene(wrap);
+      bot.appendChild(el('bubble', String(i + 1)));
+      bot.animate([{ transform: 'scale(.2) translateY(40px)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: .6 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+      beep(440 + i * 60, .1, 'triangle');
+      speak([countClip(i + 1)], String(i + 1));
+      await wait(gap);
+    }
+    copies.forEach(c => c.classList.add('idle'));
+    await wait(700);
+    await jumpTogether(copies);
+    await wait(380);
+    showBlocks(result, null, { idx: 2, groups: result <= 9 ? b : null, note: `${a} × ${b} = <b>${result}</b>` });
+    const nb = blocksEl.querySelector('.bot');
+    if (nb) { nb.classList.remove('idle'); await nb.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.18)', opacity: 1, offset: .6 }, { transform: 'scale(.95)', offset: .8 }, { transform: 'scale(1)' }],
+      { duration: 650, easing: 'ease-out' }).finished; nb.classList.add('idle'); }
+  }
+  // Divide: "8 ÷ 2" = the tower of 8 colors into 2 groups, wiggles, and bursts apart into 2 robots of 4.
+  async function animateDiv([A, B], a, b, result) {
+    const sign = blocksEl.querySelector('.opsign');
+    [A, B].forEach(x => { x.classList.remove('idle', 'hop'); x.querySelector('.bubble')?.remove(); });
+    sign?.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.2)' }], { duration: 300, fill: 'forwards' });
+    sweep(700, 300, .3, 'triangle', .1);
+    await B.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(20px,-40px) rotate(10deg)', opacity: 1, offset: .35 },
+                     { transform: 'translate(160px,40px) rotate(25deg) scale(.5)', opacity: 0 }], { duration: 650, easing: 'ease-in', fill: 'forwards' }).finished;
+    blocksEl.insertBefore(noteEl(`${a} shared into <b>${b}</b> group${b === 1 ? '' : 's'}`), blocksEl.firstChild);
+    // Color A's cubes by the group they will go to.
+    const cubes = [...A.querySelectorAll('.window .tower .cube')];
+    if (a <= 9) for (let i = 0; i < cubes.length; i++) { paintCube(cubes[i], Math.floor(i / result)); beep(500 + i * 40, .06, 'triangle'); await wait(90); }
+    await wait(350);
+    sweep(150, 90, .5, 'sawtooth', .05);
+    await A.animate([{ transform: 'none' }, { transform: 'translateX(-6px) rotate(-3deg)' }, { transform: 'translateX(6px) rotate(3deg)' },
+                     { transform: 'translateX(-6px) rotate(-3deg)' }, { transform: 'translateX(6px) rotate(3deg)' }, { transform: 'scale(1.08)' }], { duration: 750 }).finished;
+    const ra = A.getBoundingClientRect(), cx = (ra.left + ra.right) / 2, cy = (ra.top + ra.bottom) / 2;
+    poofAt(cx, cy); poofSound();
+    // Replace with the groups, starting squished in the middle and sliding apart.
+    const note = blocksEl.querySelector('.mathnote');
+    scene([]);
+    if (note) blocksEl.insertBefore(note, blocksEl.firstChild);
+    const wrap = blocksEl.querySelector('.fit'), parts = [];
+    for (let i = 0; i < b; i++) {
+      const bot = makeBot(buildNumber(result, false), { idx: i, tag: String(result) });
+      bot.querySelectorAll('.appear').forEach(e => e.classList.remove('appear'));
+      bot.querySelectorAll('.tower .cube').forEach(c => paintCube(c, i));
+      wrap.appendChild(bot); parts.push(bot);
+    }
+    fitScene(wrap);
+    await wait(40);
+    const s = sceneScale(parts[0]);
+    await Promise.all(parts.map(p => {
+      p.classList.remove('idle');
+      const r = p.getBoundingClientRect(), dx = (cx - (r.left + r.right) / 2) / s;
+      return p.animate([{ transform: `translateX(${dx}px) scale(.4)`, opacity: 0 }, { transform: `translateX(${dx * .15}px) scale(1.1)`, opacity: 1, offset: .6 }, { transform: 'none', opacity: 1 }],
+        { duration: 700, easing: 'cubic-bezier(.2,.9,.3,1.2)' }).finished;
+    }));
+    parts.forEach(p => p.classList.add('idle'));
+    const n2 = blocksEl.querySelector('.mathnote');
+    if (n2) n2.innerHTML = `${a} ÷ ${b} = <b>${result}</b> in each group`;
   }
   function sceneScale(elm) { const w = elm.closest('.fit'); if (!w) return 1; const r = w.getBoundingClientRect().width / w.offsetWidth; return r || 1; }
   function poofAt(x, y) {
@@ -748,7 +851,7 @@
   function fitScene(wrap) {
     requestAnimationFrame(() => {
       wrap.style.transform = '';
-      const note = blocksEl.querySelector('.neg-note');
+      const note = blocksEl.querySelector('.neg-note, .mathnote');
       const w = blocksEl.clientWidth - 8, h = blocksEl.clientHeight - 40 - (note ? note.offsetHeight + 14 : 0);
       const r = Math.min(1, w / wrap.scrollWidth, h / wrap.scrollHeight);
       if (r < 1) wrap.style.transform = `scale(${r})`;
@@ -779,6 +882,8 @@
     if (opts.noAppear) blocksEl.querySelectorAll('.appear').forEach(e => e.classList.remove('appear'));
     // Show where the cubes came from: cubes from the second number get the second robot's color.
     if (opts.splitAt != null) [...blocksEl.querySelectorAll('.tower .cube')].forEach((c, i) => { if (i >= opts.splitAt) c.classList.add('from-b'); });
+    if (opts.groups) colorGroups(blocksEl, opts.groups);
+    if (opts.note) blocksEl.insertBefore(noteEl(opts.note), blocksEl.firstChild);
   }
 
   // Live view while typing: one robot per number, with the math signs between them.
