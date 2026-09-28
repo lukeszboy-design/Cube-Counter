@@ -84,6 +84,16 @@
            background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%20%3Cpath%20d%3D%22M0%2090%20C60%2040%20120%2050%20180%2085%20C240%20120%20300%2045%20400%2070%20L400%20200%20L0%20200%20Z%22%20fill%3D%22%23c8f0b4%22/%3E%20%3Cpath%20d%3D%22M0%20130%20C70%2095%20140%20100%20210%20128%20C280%20156%20340%20105%20400%20118%20L400%20200%20L0%20200%20Z%22%20fill%3D%22%23aee89a%22/%3E%20%3Cpath%20d%3D%22M0%20165%20C90%20140%20170%20150%20250%20166%20C320%20180%20360%20158%20400%20160%20L400%20200%20L0%20200%20Z%22%20fill%3D%22%2396dc84%22/%3E%20%3C/svg%3E") bottom / 100% 42% no-repeat, url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20400%20120%22%3E%20%3Cg%20fill%3D%22%23ffffff%22%20opacity%3D%22.9%22%3E%20%3Cellipse%20cx%3D%2270%22%20cy%3D%2240%22%20rx%3D%2234%22%20ry%3D%2214%22/%3E%3Cellipse%20cx%3D%2292%22%20cy%3D%2232%22%20rx%3D%2222%22%20ry%3D%2215%22/%3E%3Cellipse%20cx%3D%2252%22%20cy%3D%2234%22%20rx%3D%2216%22%20ry%3D%2211%22/%3E%20%3Cellipse%20cx%3D%22300%22%20cy%3D%2262%22%20rx%3D%2230%22%20ry%3D%2212%22/%3E%3Cellipse%20cx%3D%22320%22%20cy%3D%2255%22%20rx%3D%2219%22%20ry%3D%2213%22/%3E%3Cellipse%20cx%3D%22284%22%20cy%3D%2257%22%20rx%3D%2214%22%20ry%3D%2210%22/%3E%20%3C/g%3E%3C/svg%3E") top / 100% auto no-repeat,
                        linear-gradient(180deg, #7cc8ff 0%, #b5e3ff 55%, #d9f2ff 100%); }
   .stage .blocks { position: relative; z-index: 1; }
+  /* A bird that flies across the sky now and then (behind the robots). */
+  .bird { position: absolute; left: 0; z-index: 0; pointer-events: none; will-change: transform;
+          animation: fly var(--dur, 11s) linear forwards; }
+  .bird .bob { animation: birdbob 1.6s ease-in-out infinite; }
+  .bird svg { display: block; width: 44px; height: 21px; overflow: visible; }
+  .bird .wings { transform-origin: 50% 70%; animation: flap .32s ease-in-out infinite alternate; }
+  @keyframes fly { from { transform: translateX(var(--from)) scaleX(var(--dir)); } to { transform: translateX(var(--to)) scaleX(var(--dir)); } }
+  @keyframes birdbob { 50% { transform: translateY(-7px); } }
+  @keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-0.55); } }
+  @media (prefers-reduced-motion: reduce) { .bird { display: none; } }
   .stage .bot .tag:not(.lbl) { background: rgba(255,255,255,.85); padding: 1px 10px; border-radius: 10px; }
   .stage .opsign { text-shadow: 0 2px 0 #fff, 0 0 8px #fff; }
   .stage .neg-note { background: rgba(255,255,255,.85); border-radius: 10px; padding: 2px 8px; width: auto; }
@@ -667,6 +677,29 @@
   const cheers = ['Yay!', 'Woo-hoo!', 'You got it!', 'Great job!', 'Awesome!'];
 
   showBlocks(null);
+
+  // ---------- an occasional bird ----------
+  const stageEl = document.querySelector('.stage');
+  function spawnBird() {
+    if (!stageEl || document.hidden) return;
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    const ltr = Math.random() < 0.5;
+    const b = document.createElement('div');
+    b.className = 'bird';
+    b.style.top = Math.round(h * (0.05 + Math.random() * 0.25)) + 'px';
+    b.style.setProperty('--from', (ltr ? -50 : w + 50) + 'px');
+    b.style.setProperty('--to', (ltr ? w + 50 : -50) + 'px');
+    b.style.setProperty('--dir', ltr ? 1 : -1);
+    b.style.setProperty('--dur', (9 + Math.random() * 5).toFixed(1) + 's');
+    const shade = ['#3b4a6b', '#4a5578', '#2f3d5c'][Math.floor(Math.random() * 3)];
+    b.innerHTML = '<div class="bob"><svg viewBox="0 0 34 16"><path class="wings" d="M1 6 Q9 -2 17 9 Q25 -2 33 6" fill="none" stroke="' + shade +
+      '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    b.addEventListener('animationend', e => { if (e.animationName === 'fly') b.remove(); });
+    stageEl.appendChild(b);
+  }
+  (function scheduleBird(first) {
+    setTimeout(() => { spawnBird(); scheduleBird(false); }, first ? 3000 : 12000 + Math.random() * 16000);
+  })(true);
 
   // ---------- keyboard ----------
   const keyAlias = { 'Enter': '=', '=': '=', 'Backspace': 'back', 'Escape': 'C', 'c': 'C', 'C': 'C', 'x': '*', 'X': '*' };
