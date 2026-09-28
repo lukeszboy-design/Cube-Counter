@@ -138,9 +138,8 @@
   .bot .window .tower, .bot .window .tcol { gap: 6px; }
   .bot .window .row { gap: 10px; }
   @keyframes shake { 25% { transform: rotate(-8deg) } 75% { transform: rotate(8deg) } }
-  .mini s { width: 7px !important; height: 7px !important; }
   /* keypad */
-  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 0 0 auto; height: 290px; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 0 0 auto; height: 330px; }
   button {
     font: inherit; border: none; border-radius: 22px; cursor: pointer; color: #fff;
     font-size: 30px; font-weight: 800; position: relative;
@@ -157,10 +156,9 @@
   .clr { background: var(--clr); font-size: 22px; }
   .util { background: #6366f1; font-size: 20px; }
   .num { font-size: 30px; line-height: 1; }
-  .mini { display: flex; gap: 2px; align-items: flex-end; justify-content: center; }
-  .mcol { display: flex; flex-direction: column-reverse; gap: 1px; }
-  .mini s { width: 8px !important; height: 6px !important; border-radius: 2px !important; }
-  button .num { font-size: 26px; }
+  .mini { display: flex; gap: 3px; align-items: flex-end; justify-content: center; }
+  .mcol { display: flex; flex-direction: column-reverse; gap: 2px; }
+  button .num { font-size: 30px; }
   .tower { display: flex; gap: 3px; align-items: flex-end; }
   .tcol { display: flex; flex-direction: column-reverse; gap: 2px; }
   .tower .cube { width: 22px; height: 22px; }
@@ -169,9 +167,9 @@
   .row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
   .chip .row { gap: 6px; }
   .opsign { font-size: 40px; font-weight: 800; color: var(--op); align-self: center; margin: 0 8px; }
-  .mini s { width: 11px; height: 11px; border-radius: 2px; background: var(--cube);
-            box-shadow: inset -2px -2px 0 var(--cube-side); text-decoration: none; }
-  .mini.zero { display: block; width: 20px; height: 18px; border: 2px dashed rgba(255,255,255,.85); border-radius: 4px; }
+  .mini s { width: 13px; height: 10px; border-radius: 3px; background: var(--c, var(--cube)); text-decoration: none;
+            box-shadow: 0 0 0 1.5px #fff, inset -2px -2px 0 rgba(0,0,0,.22), inset 2px 2px 0 rgba(255,255,255,.35); }
+  .mini.zero { display: block; width: 26px; height: 24px; border: 2px dashed rgba(255,255,255,.85); border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -215,8 +213,12 @@
     const h = Math.ceil(n / 2);
     return [h, n - h];
   }
+  // Button cubes come in mixed colors, like a tub of classroom linking cubes.
+  const MINI_COLORS = ['#ffd23f', '#ff6b6b', '#4dabf7', '#69db7c', '#ff922b', '#f783ac', '#b197fc', '#3bc9db', '#ffffff'];
   function miniArray(n) {
-    return `<div class="mini">${colSizes(n).map(c => `<div class="mcol">${'<s></s>'.repeat(c)}</div>`).join('')}</div>`;
+    let i = 0;
+    const cube = () => `<s style="--c:${MINI_COLORS[(n * 2 + i++) % MINI_COLORS.length]}"></s>`;
+    return `<div class="mini">${colSizes(n).map(c => `<div class="mcol">${Array.from({ length: c }, cube).join('')}</div>`).join('')}</div>`;
   }
 
   // ---------- keypad ----------
