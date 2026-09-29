@@ -272,12 +272,12 @@
                        background: #fff7d6; border: 1px solid #f5d77a; border-radius: 6px; padding: 0 2px; line-height: 12px; }
   .opt .sw { width: 19px; height: 19px; border-radius: 50%; border: 3px solid; box-sizing: border-box; }
   .opt .sw.sq { border-radius: 5px; border-color: transparent; }
-  .opt .mh { width: 25px; height: 18px; display: block; } .opt .mh svg { width: 100%; height: 100%; overflow: visible; }
+  .opt .mh { width: 21px; height: 19px; display: block; } .opt .mh svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .opt .nohat { width: 16px; height: 16px; border: 2.5px solid #a78bfa; border-radius: 50%; position: relative; }
   .opt .nohat::after { content: ""; position: absolute; left: 50%; top: -2px; width: 2.5px; height: 16px; background: #a78bfa; transform: translateX(-50%) rotate(45deg); }
   @media (max-width: 470px) {
     .brow { gap: 3px; } .brow b { display: none; }
-    .bbar button.opt { width: 25px; height: 25px; } .opt .sw { width: 17px; height: 17px; } .opt .mh { width: 22px; height: 16px; }
+    .bbar button.opt { width: 25px; height: 25px; } .opt .sw { width: 17px; height: 17px; } .opt .mh { width: 18px; height: 17px; }
     .modes button.mode { padding: 6px 10px; font-size: 16px; }
   }
   .flystar { position: fixed; z-index: 50; font-size: 34px; color: #ffd23f; pointer-events: none; text-shadow: 0 2px 0 #e0a800; }
@@ -1132,7 +1132,9 @@
   const HATS = [
     { id: 'none', name: 'No hat' }, { id: 'cap', name: 'Cap' },
     { id: 'party', name: 'Party hat', stars: 3 }, { id: 'crown', name: 'Crown', stars: 10 }, { id: 'tophat', name: 'Top hat', stars: 20 },
-    { id: 'wizard', name: 'Wizard hat', stars: 35 }, { id: 'cowboy', name: 'Cowboy hat', stars: 50 }];
+    { id: 'wizard', name: 'Wizard hat', stars: 35 }, { id: 'cowboy', name: 'Cowboy hat', stars: 50 },
+    { id: 'chef', name: 'Chef hat', stars: 18 }, { id: 'pirate', name: 'Pirate hat', stars: 28 }, { id: 'propeller', name: 'Propeller cap', stars: 55 }];
+  HATS.sort((p, q) => (p.stars || 0) - (q.stars || 0));
   const BIRDS = [
     { id: 'grey', name: 'Grey bird', c: '#3b4a6b' },
     { id: 'red', name: 'Red cardinal', c: '#e03131', crest: true, stars: 8 },
@@ -1152,6 +1154,9 @@
       crown: '<path d="M9 39 L9 13 L20.5 24 L32 6 L43.5 24 L55 13 L55 39 Z" fill="#facc15" stroke="#ca8a04" stroke-width="2.5" stroke-linejoin="round"/><circle cx="20" cy="32" r="3.5" fill="#ef4444"/><circle cx="32" cy="31" r="4" fill="#3b82f6"/><circle cx="44" cy="32" r="3.5" fill="#22c55e"/>',
       tophat: '<rect x="15" y="1" width="34" height="34" rx="3" fill="#1f2937"/><rect x="15" y="24" width="34" height="7" fill="#ef4444"/><rect x="3" y="33" width="58" height="7" rx="3.5" fill="#111827"/>',
       wizard: '<path d="M12 38 L37 -6 Q40 -9 42 -5 L40 0 L52 38 Z" fill="#4c1d95" stroke="#2e1065" stroke-width="2" stroke-linejoin="round"/><ellipse cx="32" cy="37" rx="29" ry="4.5" fill="#5b21b6"/><path d="M28 20 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.7 -3.2 1.7 .6 -3.6 -2.6 -2.5 3.6 -.5 Z" fill="#fde047"/><circle cx="40" cy="12" r="1.8" fill="#fde047"/><circle cx="21" cy="31" r="1.6" fill="#fde047"/>',
+      chef: '<rect x="16" y="26" width="32" height="13" rx="2" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><path d="M17 28 Q5 23 11 13 Q13 3 24 7 Q31 -2 39 6 Q49 2 52 12 Q60 21 47 28 Z" fill="#fff" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round"/><path d="M26 27 L26 20 M32 27 L32 18 M38 27 L38 20" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>',
+      pirate: '<path d="M2 34 Q14 31 19 14 Q32 5 45 14 Q50 31 62 34 Q50 41 32 39 Q14 41 2 34 Z" fill="#1f2937" stroke="#111827" stroke-width="2" stroke-linejoin="round"/><path d="M7 34.5 Q32 42 57 34.5" stroke="#facc15" stroke-width="2" fill="none"/><circle cx="32" cy="21" r="5.5" fill="#fff"/><circle cx="30.1" cy="20.6" r="1.3" fill="#1f2937"/><circle cx="33.9" cy="20.6" r="1.3" fill="#1f2937"/><path d="M26 28 L38 32.5 M38 28 L26 32.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>',
+      propeller: '<path d="M8 39 Q8 13 32 13 Q56 13 56 39 Z" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/><path d="M27 13.6 Q22 26 21 39 L29 39 Q29 26 30 13 Z M37 13.6 Q42 26 43 39 L35 39 Q35 26 34 13 Z" fill="#facc15"/><rect x="30.8" y="4" width="2.4" height="10" fill="#475569"/><g transform="translate(32 4)"><ellipse rx="15" ry="3" fill="#ef4444"><animateTransform attributeName="transform" type="scale" values="1 1;0.08 1;1 1" dur="0.35s" repeatCount="indefinite"/></ellipse><circle r="2.6" fill="#fde047"/></g>',
       cowboy: '<g transform="translate(0,-6)"><path d="M18 34 Q15 8 25 8 Q32 14 39 8 Q49 8 46 34 Z" fill="#b45309" stroke="#78350f" stroke-width="2"/><rect x="17" y="27" width="30" height="5" fill="#78350f"/><path d="M1 30 Q32 44 63 30 Q60 40 32 41 Q4 40 1 30 Z" fill="#92400e" stroke="#78350f" stroke-width="1.5"/></g>'
     }[id];
     return s ? '<svg viewBox="0 0 64 40" preserveAspectRatio="xMidYMax meet">' + s + '</svg>' : '';
@@ -1417,6 +1422,9 @@
     };
     row('Robot', ROBOT_COLORS, bd.color, 'color', it => '<span class="sw" style="background:' + it.c + ';border-color:' + it.cd + '"></span>');
     row('Hat', HATS, bd.hat, 'hat', it => it.id === 'none' ? '<span class="nohat"></span>' : '<span class="mh">' + hatSVG(it.id) + '</span>');
+    bbarEl.querySelectorAll('.mh svg').forEach(svg => {
+      try { const b = svg.getBBox(); if (b.width) { const pad = 2; svg.setAttribute('viewBox', `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); } } catch (e) {}
+    });
     row('Bricks', BRICKS, bd.brick, 'brick', it => '<span class="sw sq" style="' + (it.rainbow ? 'background:conic-gradient(#ff6b6b,#ffd23f,#69db7c,#4dabf7,#b197fc,#ff6b6b)' :
       'background:' + GROUP_COLORS[it.g][0] + ';border-color:' + GROUP_COLORS[it.g][1]) + '"></span>');
   }
