@@ -136,10 +136,11 @@
   .bot .window { background: #fffdf5; border-radius: 9px; padding: 6px; box-shadow: inset 0 2px 5px rgba(0,0,0,.2);
                  display: flex; justify-content: center; align-items: flex-end; min-height: 28px; min-width: 32px; }
   .bot .window .row { gap: 8px; flex-wrap: nowrap; }
-  .bot .arm { position: absolute; top: 10px; width: 9px; height: 34px; background: #475569; border-radius: 5px; transition: transform .25s; }
-  .bot .arm::after { content: ""; position: absolute; bottom: -7px; left: -3px; width: 15px; height: 15px; border-radius: 50%; background: #fbbf24; }
-  .bot .arm.l { left: -11px; transform-origin: top center; transform: rotate(18deg); }
-  .bot .arm.r { right: -11px; transform-origin: top center; transform: rotate(-18deg); }
+  .bot .arm { position: absolute; top: 10px; width: 9px; height: 34px; transform-origin: 50% 3px; }
+  .bot .arm.l { left: -11px; } .bot .arm.r { right: -11px; }
+  .bot .limb { width: 100%; height: 100%; background: #475569; border-radius: 5px; position: relative; transform-origin: 50% 3px; }
+  .bot .limb::after { content: ""; position: absolute; bottom: -7px; left: -3px; width: 15px; height: 15px; border-radius: 50%; background: #fbbf24; }
+  .bot .arm.l .limb { transform: rotate(18deg); } .bot .arm.r .limb { transform: rotate(-18deg); }
   .bot .legs { display: flex; gap: 12px; }
   .bot .legs i { width: 9px; height: 16px; background: #475569; position: relative; }
   .bot .legs i::after { content: ""; position: absolute; bottom: -6px; left: -6px; width: 21px; height: 10px; border-radius: 10px 10px 4px 4px; background: #ef4444; }
@@ -148,29 +149,35 @@
   .bot .bubble { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #fff; border: 3px solid #3b82f6;
                  border-radius: 14px; padding: 1px 9px; font-weight: 800; font-size: 15px; white-space: nowrap; z-index: 2; }
   .bot.neg .window { outline: 3px dashed #ef4444; }
-  /* Robots dance in place: sway and bounce, swing their arms, step their feet. */
-  .bot { transform-origin: bottom center; }
-  .bot.idle { animation: dance 1.1s ease-in-out infinite; animation-delay: var(--d, 0s); }
-  .bot.idle .arm.l { animation: armL 1.1s ease-in-out infinite; animation-delay: var(--d, 0s); }
-  .bot.idle .arm.r { animation: armR 1.1s ease-in-out infinite; animation-delay: var(--d, 0s); }
-  .bot.idle .legs i { animation: step 0.55s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
-  .bot.idle .legs i:last-child { animation-direction: alternate-reverse; }
-  .bot.idle .head { animation: nod 0.55s ease-in-out infinite alternate; animation-delay: var(--d, 0s); transform-origin: bottom center; }
-  @keyframes dance { 0%,100% { transform: translateY(0) rotate(0) } 25% { transform: translateY(-8px) rotate(-5deg) }
-                     50% { transform: translateY(0) rotate(0) } 75% { transform: translateY(-8px) rotate(5deg) } }
-  @keyframes armL { 0%,100% { transform: rotate(18deg) } 50% { transform: rotate(150deg) } }
-  @keyframes armR { 0%,100% { transform: rotate(-150deg) } 50% { transform: rotate(-18deg) } }
-  @keyframes step { from { transform: translateY(0) } to { transform: translateY(-5px) } }
-  @keyframes nod { from { transform: rotate(-4deg) } to { transform: rotate(4deg) } }
-  @media (prefers-reduced-motion: reduce) { .bot.idle, .bot.idle * { animation: none !important; } }
-  @keyframes bob { 50% { transform: translateY(-3px); } }
+  /* Robots dance in place with layered, eased motion:
+     .rig sways slowly, .bounce bobs with a little squash, head/antenna/arms follow a beat later, eyes blink. */
+  :root { --sine: cubic-bezier(.37, 0, .63, 1); --beat: .62s; }
+  .bot { transform-origin: 50% 100%; }
+  .bot .rig { display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%;
+              animation: sway calc(var(--beat) * 4) var(--sine) infinite alternate; animation-delay: var(--d, 0s); will-change: transform; }
+  .bot .bounce { display: flex; flex-direction: column; align-items: center; transform-origin: 50% 100%;
+                 animation: bounce var(--beat) var(--sine) infinite alternate; animation-delay: var(--d, 0s); }
+  .bot .head { transform-origin: 50% 100%; animation: nod var(--beat) var(--sine) infinite alternate; animation-delay: calc(var(--d, 0s) - .12s); }
+  .bot .ant { transform-origin: 50% 100%; animation: wobble var(--beat) var(--sine) infinite alternate; animation-delay: calc(var(--d, 0s) - .2s); }
+  .bot .arm.l .limb { animation: swingL calc(var(--beat) * 2) var(--sine) infinite alternate; animation-delay: var(--d, 0s); }
+  .bot .arm.r .limb { animation: swingR calc(var(--beat) * 2) var(--sine) infinite alternate; animation-delay: calc(var(--d, 0s) - var(--beat)); }
+  .bot .legs i { animation: step var(--beat) var(--sine) infinite alternate; animation-delay: var(--d, 0s); }
+  .bot .legs i:last-child { animation-delay: calc(var(--d, 0s) - var(--beat)); }
+  .bot .eye { animation: blink 4.6s linear infinite; animation-delay: calc(var(--d, 0s) * 7); transform-origin: 50% 50%; }
+  .bot .shadow { width: 64px; height: 10px; margin-top: 2px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(20,60,20,.28), rgba(20,60,20,0) 70%);
+                 animation: shadow var(--beat) var(--sine) infinite alternate; animation-delay: var(--d, 0s); }
+  @keyframes sway { from { transform: rotate(-2.2deg) } to { transform: rotate(2.2deg) } }
+  @keyframes bounce { from { transform: translateY(0) scale(1.03, .97) } to { transform: translateY(-5px) scale(.985, 1.015) } }
+  @keyframes nod { from { transform: rotate(-3deg) translateY(1px) } to { transform: rotate(3deg) translateY(-1px) } }
+  @keyframes wobble { from { transform: rotate(-9deg) } to { transform: rotate(9deg) } }
+  @keyframes swingL { from { transform: rotate(10deg) } to { transform: rotate(46deg) } }
+  @keyframes swingR { from { transform: rotate(-10deg) } to { transform: rotate(-46deg) } }
+  @keyframes step { from { transform: translateY(0) } to { transform: translateY(-4px) } }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1) } 95.5% { transform: scaleY(.12) } }
+  @keyframes shadow { from { transform: scaleX(1); opacity: 1 } to { transform: scaleX(.82); opacity: .7 } }
+  @media (prefers-reduced-motion: reduce) { .bot, .bot * { animation: none !important; } }
+  .fit { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
   @keyframes wave { 0%,60%,100% { transform: rotate(-18deg) } 70% { transform: rotate(-160deg) } 80% { transform: rotate(-130deg) } 90% { transform: rotate(-160deg) } }
-  .bot.hop { animation: hop .35s ease; }
-  @keyframes hop { 40% { transform: translateY(-10px) } }
-  .bot.cheer { animation: jump .5s ease 2; }
-  .bot.cheer .arm.l { transform: rotate(150deg); } .bot.cheer .arm.r { transform: rotate(-150deg); }
-  @keyframes jump { 0%,100% { transform: translateY(0) } 45% { transform: translateY(-16px) } }
-  .bot.oops { animation: shake .4s ease 2; }
   .bot.oops .mouth { border: 3px solid #1e293b; border-bottom: none; border-radius: 12px 12px 0 0; bottom: 4px; }
   .bot .window .rod { height: 320px; width: 42px; border: 2px solid var(--ten-side); box-sizing: border-box; }
   .bot .window .rod i { border-bottom: 2px solid var(--ten-side); }
@@ -584,12 +591,7 @@
     setTimeout(() => { sweep(220, 660, .3); sweep(260, 780, .3, 'triangle', .08); }, 150);
     await Promise.all(robots.map((r, i) => {
       const d = (midX - (rects[i].left + rects[i].right) / 2) / s;
-      return r.animate([
-        { transform: 'translate(0,0) scale(1,1)' },
-        { transform: 'translate(0,8px) scale(1.1,.85)', offset: .18 },
-        { transform: `translate(${d * .45}px,-45px) scale(.95,1.08) rotate(${d > 0 ? 12 : d < 0 ? -12 : 0}deg)`, offset: .55 },
-        { transform: `translate(${d}px,-20px) scale(.55)`, opacity: .9, offset: .92 },
-        { transform: `translate(${d}px,-20px) scale(.3)`, opacity: 0 }], { duration: 950, easing: 'ease-in-out', fill: 'forwards' }).finished;
+      return r.animate(leapKeys(d), { duration: 1050, delay: i * 40, fill: 'forwards' }).finished;
     }));
     poofAt(midX, midY); poofSound();
   }
@@ -610,7 +612,7 @@
       bot.querySelectorAll('.appear').forEach(e => e.classList.remove('appear'));
       wrap.appendChild(bot); copies.push(bot); fitScene(wrap);
       bot.appendChild(el('bubble', String(i + 1)));
-      bot.animate([{ transform: 'scale(.2) translateY(40px)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: .6 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+      popIn(bot);
       beep(440 + i * 60, .1, 'triangle');
       speak([countClip(i + 1)], String(i + 1));
       await wait(gap);
@@ -621,8 +623,7 @@
     await wait(380);
     showBlocks(result, null, { idx: 2, groups: result <= 9 ? b : null, note: `${a} × ${b} = <b>${result}</b>` });
     const nb = blocksEl.querySelector('.bot');
-    if (nb) { nb.classList.remove('idle'); await nb.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.18)', opacity: 1, offset: .6 }, { transform: 'scale(.95)', offset: .8 }, { transform: 'scale(1)' }],
-      { duration: 650, easing: 'ease-out' }).finished; nb.classList.add('idle'); }
+    if (nb) await popIn(nb);
   }
   // Divide: "8 ÷ 2" = the tower of 8 colors into 2 groups, wiggles, and bursts apart into 2 robots of 4.
   async function animateDiv([A, B], a, b, result) {
@@ -630,8 +631,9 @@
     [A, B].forEach(x => { x.classList.remove('idle', 'hop'); x.querySelector('.bubble')?.remove(); });
     sign?.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.2)' }], { duration: 300, fill: 'forwards' });
     sweep(700, 300, .3, 'triangle', .1);
-    await B.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(20px,-40px) rotate(10deg)', opacity: 1, offset: .35 },
-                     { transform: 'translate(160px,40px) rotate(25deg) scale(.5)', opacity: 0 }], { duration: 650, easing: 'ease-in', fill: 'forwards' }).finished;
+    await B.animate([{ transform: 'none', opacity: 1, easing: 'cubic-bezier(.3,0,.4,1)' }, { transform: 'translate(0,4px) scale(1.06,.92)', offset: .15, easing: 'cubic-bezier(.2,.7,.35,1)' },
+                     { transform: 'translate(50px,-46px) rotate(6deg)', opacity: 1, offset: .5, easing: 'cubic-bezier(.5,0,.8,.5)' },
+                     { transform: 'translate(150px,30px) rotate(14deg) scale(.6)', opacity: 0 }], { duration: 850, fill: 'forwards' }).finished;
     blocksEl.insertBefore(noteEl(`${a} shared into <b>${b}</b> group${b === 1 ? '' : 's'}`), blocksEl.firstChild);
     // Color A's cubes by the group they will go to.
     const cubes = [...A.querySelectorAll('.window .tower .cube')];
@@ -666,6 +668,20 @@
     const n2 = blocksEl.querySelector('.mathnote');
     if (n2) n2.innerHTML = `${a} ÷ ${b} = <b>${result}</b> in each group`;
   }
+  // A leap with anticipation (crouch), an eased arc, and a squash into the meeting point.
+  function leapKeys(d) {
+    const lean = d > 0 ? 1 : d < 0 ? -1 : 0;
+    return [
+      { transform: 'translate(0,0) scale(1,1)', easing: 'cubic-bezier(.3,0,.4,1)' },
+      { transform: 'translate(0,5px) scale(1.08,.9)', offset: .2, easing: 'cubic-bezier(.2,.7,.35,1)' },
+      { transform: `translate(${d * .5}px,-52px) scale(.97,1.05) rotate(${lean * 5}deg)`, offset: .58, easing: 'cubic-bezier(.55,0,.75,.35)' },
+      { transform: `translate(${d}px,-14px) scale(.72,.66) rotate(${lean * 8}deg)`, opacity: 1, offset: .9, easing: 'ease-in' },
+      { transform: `translate(${d}px,-14px) scale(.4)`, opacity: 0 }];
+  }
+  function popIn(bot) {
+    return bot.animate([{ transform: 'translateY(10px) scale(.25)', opacity: 0 }, { transform: 'translateY(-6px) scale(1.1)', opacity: 1, offset: .5 },
+                        { transform: 'translateY(0) scale(.97)', offset: .75 }, { transform: 'none' }], { duration: 760, easing: 'cubic-bezier(.3,.7,.4,1)' }).finished;
+  }
   function sceneScale(elm) { const w = elm.closest('.fit'); if (!w) return 1; const r = w.getBoundingClientRect().width / w.offsetWidth; return r || 1; }
   function poofAt(x, y) {
     const st = stageEl.getBoundingClientRect(), p = el('poof');
@@ -693,21 +709,15 @@
     const midX = (ra.left + ra.right + rb.left + rb.right) / 4;
     const midY = Math.min((ra.top + ra.bottom) / 2, (rb.top + rb.bottom) / 2);
     const da = (midX - (ra.left + ra.right) / 2) / s, db = (midX - (rb.left + rb.right) / 2) / s;
-    const jump = d => [
-      { transform: 'translate(0,0) scale(1,1)' },
-      { transform: 'translate(0,8px) scale(1.1,.85)', offset: .18 },
-      { transform: `translate(${d * .45}px,-45px) scale(.95,1.08) rotate(${d > 0 ? 12 : -12}deg)`, offset: .55 },
-      { transform: `translate(${d}px,-20px) scale(.55) rotate(${d > 0 ? 25 : -25}deg)`, opacity: .9, offset: .92 },
-      { transform: `translate(${d}px,-20px) scale(.3)`, opacity: 0 }];
+    const jump = d => leapKeys(d);
     setTimeout(() => { sweep(220, 660, .3); sweep(260, 780, .3, 'triangle', .08); }, 150);
-    await Promise.all([A.animate(jump(da), { duration: 950, easing: 'ease-in-out', fill: 'forwards' }).finished,
-                       B.animate(jump(db), { duration: 950, easing: 'ease-in-out', fill: 'forwards' }).finished]);
+    await Promise.all([A.animate(jump(da), { duration: 1050, fill: 'forwards' }).finished,
+                       B.animate(jump(db), { duration: 1050, fill: 'forwards' }).finished]);
     poofAt(midX, midY); poofSound();
     await wait(380);
     showBlocks(result, null, { idx: 2, splitAt: result <= 9 ? a : null });
     const nb = blocksEl.querySelector('.bot');
-    if (nb) { nb.classList.remove('idle'); await nb.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.18)', opacity: 1, offset: .6 }, { transform: 'scale(.95)', offset: .8 }, { transform: 'scale(1)' }],
-      { duration: 650, easing: 'ease-out' }).finished; nb.classList.add('idle'); }
+    if (nb) await popIn(nb);
   }
   // Taking away: the second robot hops off, then that many cubes glow and pop out of the first robot.
   async function animateSub([A, B], a, b, result) {
@@ -715,8 +725,9 @@
     [A, B].forEach(x => { x.classList.remove('idle', 'hop'); x.querySelector('.bubble')?.remove(); });
     sign?.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.2)' }], { duration: 300, fill: 'forwards' });
     sweep(700, 300, .3, 'triangle', .1);
-    await B.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(20px,-40px) rotate(10deg)', opacity: 1, offset: .35 },
-                     { transform: 'translate(160px,40px) rotate(25deg) scale(.5)', opacity: 0 }], { duration: 650, easing: 'ease-in', fill: 'forwards' }).finished;
+    await B.animate([{ transform: 'none', opacity: 1, easing: 'cubic-bezier(.3,0,.4,1)' }, { transform: 'translate(0,4px) scale(1.06,.92)', offset: .15, easing: 'cubic-bezier(.2,.7,.35,1)' },
+                     { transform: 'translate(50px,-46px) rotate(6deg)', opacity: 1, offset: .5, easing: 'cubic-bezier(.5,0,.8,.5)' },
+                     { transform: 'translate(150px,30px) rotate(14deg) scale(.6)', opacity: 0 }], { duration: 850, fill: 'forwards' }).finished;
     const ones = [...A.querySelectorAll('.window .tower .cube')];
     const onesVal = a % 10, canPop = b < 10 && onesVal >= b;
     const s = sceneScale(A);
@@ -830,10 +841,10 @@
     const [c, cd] = BOT_COLORS[idx % BOT_COLORS.length];
     b.style.setProperty('--c', c); b.style.setProperty('--cd', cd);
     b.style.setProperty('--d', (-idx * 0.18) + 's'); // each robot a little out of step
-    b.innerHTML = '<div class="ant"></div><div class="head"><div class="eye"></div><div class="eye"></div>' +
+    b.innerHTML = '<div class="rig"><div class="bounce"><div class="ant"></div><div class="head"><div class="eye"></div><div class="eye"></div>' +
       '<div class="cheek l"></div><div class="cheek r"></div><div class="mouth"></div></div><div class="neck"></div>' +
-      '<div class="torso"><div class="arm l"></div><div class="window"></div><div class="arm r"></div></div>' +
-      '<div class="legs"><i></i><i></i></div>';
+      '<div class="torso"><div class="arm l"><div class="limb"></div></div><div class="window"></div><div class="arm r"><div class="limb"></div></div></div>' +
+      '<div class="legs"><i></i><i></i></div></div></div><div class="shadow"></div>';
     if (content) b.querySelector('.window').appendChild(content);
     if (tag) b.appendChild(el('tag' + (lbl ? ' lbl' : ''), tag));
     return b;
@@ -848,13 +859,14 @@
     return parts.join(' + ') || 'zero';
   }
   // Shrink the scene to fit the screen if a big number makes it too wide/tall.
-  function fitScene(wrap) {
+  function fitScene(wrap, instant) {
     requestAnimationFrame(() => {
-      wrap.style.transform = '';
       const note = blocksEl.querySelector('.neg-note, .mathnote');
       const w = blocksEl.clientWidth - 8, h = blocksEl.clientHeight - 40 - (note ? note.offsetHeight + 14 : 0);
       const r = Math.min(1, w / wrap.scrollWidth, h / wrap.scrollHeight);
-      if (r < 1) wrap.style.transform = `scale(${r})`;
+      if (instant) wrap.style.transition = 'none';
+      wrap.style.transform = `scale(${r})`;
+      if (instant) requestAnimationFrame(() => { wrap.style.transition = ''; });
     });
   }
   function scene(nodes, note) {
@@ -864,7 +876,7 @@
     const wrap = el('fit');
     nodes.forEach(n => wrap.appendChild(n));
     blocksEl.appendChild(wrap);
-    fitScene(wrap);
+    fitScene(wrap, true);
   }
 
   function showBlocks(v, msg, opts = {}) {
@@ -887,33 +899,106 @@
   }
 
   // Live view while typing: one robot per number, with the math signs between them.
+  const SPRING = 'cubic-bezier(.2, .9, .3, 1.25)';
+  function numberContent(v) {
+    if (isNaN(v)) return null;
+    if (Math.abs(v) >= 100000) return el('bigtext', 'WOW!');
+    return v !== 0 ? buildNumber(v, false) : null;
+  }
+  function enterAnim(node) {
+    node.animate([{ transform: 'translateY(24px) scale(.55)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, easing: SPRING });
+  }
+  // Put a new number into an existing robot: pieces it already had stay put, only new ones drop in.
+  function updateBot(bot, t, tagText) {
+    const win = bot.querySelector('.window');
+    const oldCubes = win.querySelectorAll('.tower .cube').length, oldRods = win.querySelectorAll('.rod').length, oldFlats = win.querySelectorAll('.flat').length;
+    const v = parseFloat(t);
+    win.innerHTML = '';
+    const c = numberContent(v); if (c) win.appendChild(c);
+    [...win.querySelectorAll('.tower .cube')].slice(0, oldCubes).forEach(e => e.classList.remove('appear'));
+    [...win.querySelectorAll('.rod')].slice(0, oldRods).forEach(e => e.classList.remove('appear'));
+    [...win.querySelectorAll('.flat')].slice(0, oldFlats).forEach(e => e.classList.remove('appear'));
+    bot.classList.toggle('neg', v < 0);
+    const tg = bot.querySelector('.tag'); if (tg) tg.textContent = tagText;
+    bot.animate([{ transform: 'none' }, { transform: 'scale(1.05, .95)', offset: .35 }, { transform: 'none' }], { duration: 360, easing: 'ease-out' });
+  }
+  // Live view while typing: one robot per number, with the math signs between them.
   function showExpression(toks) {
     const nums = toks.filter(t => !isOp(t));
     if (!nums.length) { showBlocks(null); return; }
-    const nodes = []; let idx = 0;
-    for (const t of toks) {
-      if (isOp(t)) { nodes.push(el('opsign', OPS[t])); continue; }
-      const v = parseFloat(t);
-      let content = null;
-      if (isNaN(v)) content = null;
-      else if (Math.abs(v) >= 100000) content = el('bigtext', 'WOW!');
-      else if (v !== 0) content = buildNumber(v, false);
-      nodes.push(makeBot(content, { idx: idx++, tag: t, neg: v < 0 }));
+    const tagFor = t => (toks.length === 1 && !isNaN(parseFloat(t)) && Math.abs(parseFloat(t)) < 100000) ? describe(parseFloat(t)) : t;
+    const makeNode = (t, idx) => {
+      if (isOp(t)) { const o = el('opsign', OPS[t]); o.dataset.tok = t; return o; }
+      const bot = makeBot(numberContent(parseFloat(t)), { idx, tag: tagFor(t), neg: parseFloat(t) < 0 });
+      bot.dataset.tok = t; return bot;
+    };
+    let wrap = blocksEl.querySelector('.fit');
+    if (!wrap || wrap.dataset.mode !== 'expr' || blocksEl.querySelector('.mathnote, .neg-note')) {
+      let idx = 0;
+      scene(toks.map(t => makeNode(t, isOp(t) ? 0 : idx++)));
+      blocksEl.querySelector('.fit').dataset.mode = 'expr';
+      return;
     }
-    scene(nodes);
+    const kids = [...wrap.children];
+    let idx = 0;
+    toks.forEach((t, i) => {
+      const k = kids[i], botIdx = isOp(t) ? 0 : idx++;
+      if (k && k.dataset.tok === t) { if (!isOp(t)) { const tg = k.querySelector('.tag'); if (tg) tg.textContent = tagFor(t); } return; }
+      if (k && isOp(t) && k.classList.contains('opsign')) {
+        k.textContent = OPS[t]; k.dataset.tok = t;
+        k.animate([{ transform: 'scale(.4) rotate(-60deg)', opacity: .3 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: SPRING });
+        return;
+      }
+      if (k && !isOp(t) && k.classList.contains('bot')) { updateBot(k, t, tagFor(t)); k.dataset.tok = t; return; }
+      const n = makeNode(t, botIdx);
+      if (k) wrap.replaceChild(n, k); else wrap.appendChild(n);
+      enterAnim(n);
+    });
+    kids.slice(toks.length).forEach(k => {
+      k.dataset.tok = '';
+      k.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(16px) scale(.5)', opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' })
+        .finished.then(() => { k.remove(); fitScene(wrap); });
+    });
+    fitScene(wrap);
   }
 
   // ---------- robot moods ----------
   let moodTimer;
+  function raiseArms(bot, times = 2) {
+    const kf = side => [{ transform: 'rotate(0)' }, { transform: `rotate(${side * 128}deg)`, offset: .3 }, { transform: `rotate(${side * 112}deg)`, offset: .5 },
+                        { transform: `rotate(${side * 128}deg)`, offset: .7 }, { transform: 'rotate(0)' }];
+    bot.querySelector('.arm.l')?.animate(kf(1), { duration: 1100 * times / 2 + 400, easing: 'cubic-bezier(.45,0,.55,1)' });
+    bot.querySelector('.arm.r')?.animate(kf(-1), { duration: 1100 * times / 2 + 400, easing: 'cubic-bezier(.45,0,.55,1)' });
+  }
+  function hopAnim(bot, height = 18, delay = 0) {
+    return bot.animate([
+      { transform: 'none', easing: 'cubic-bezier(.3,0,.4,1)' },
+      { transform: 'translateY(3px) scale(1.07, .92)', offset: .16, easing: 'cubic-bezier(.2,.65,.35,1)' },
+      { transform: `translateY(${-height}px) scale(.97, 1.04)`, offset: .52, easing: 'cubic-bezier(.55,0,.8,.45)' },
+      { transform: 'translateY(0) scale(1.05, .95)', offset: .84, easing: 'ease-out' },
+      { transform: 'none' }], { duration: 560, delay });
+  }
   function buddy(mood, text, ms = 1400) {
     clearTimeout(moodTimer);
     const bots = [...blocksEl.querySelectorAll('.bot')];
-    const target = mood === 'cheer' ? bots : bots.slice(-1);
     bots.forEach(b => b.querySelector('.bubble')?.remove());
-    target.forEach(b => { b.classList.remove('idle', 'hop', 'cheer', 'oops'); void b.offsetWidth; b.classList.add(mood); });
     const speaker = bots[bots.length - 1];
-    if (speaker && text) speaker.appendChild(el('bubble', text));
-    moodTimer = setTimeout(() => bots.forEach(b => { b.classList.remove('hop', 'cheer', 'oops'); b.classList.add('idle'); b.querySelector('.bubble')?.remove(); }), ms);
+    if (mood === 'hop' && speaker) hopAnim(speaker, 16);
+    if (mood === 'cheer') bots.forEach((b, i) => { hopAnim(b, 26, i * 60); hopAnim(b, 20, 600 + i * 60); raiseArms(b); });
+    if (mood === 'oops' && speaker) {
+      speaker.classList.add('oops');
+      speaker.animate([{ transform: 'none' }, { transform: 'rotate(-7deg)' }, { transform: 'rotate(6deg)' }, { transform: 'rotate(-4deg)' }, { transform: 'rotate(2deg)' }, { transform: 'none' }],
+        { duration: 900, easing: 'ease-in-out' });
+    }
+    if (speaker && text) {
+      const bub = el('bubble', text); speaker.appendChild(bub);
+      bub.animate([{ transform: 'translateX(-50%) scale(.4)', opacity: 0 }, { transform: 'translateX(-50%) scale(1)', opacity: 1 }], { duration: 300, easing: SPRING });
+    }
+    moodTimer = setTimeout(() => bots.forEach(b => {
+      b.classList.remove('oops');
+      const bub = b.querySelector('.bubble');
+      if (bub) bub.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateX(-50%) scale(.8)' }], { duration: 220, fill: 'forwards' }).finished.then(() => bub.remove());
+    }), ms);
   }
   const cheers = ['Yay!', 'Woo-hoo!', 'You got it!', 'Great job!', 'Awesome!'];
 
