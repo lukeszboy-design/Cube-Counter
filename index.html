@@ -62,8 +62,7 @@
   /* cube pieces */
   .cube { width: 18px; height: 18px; border-radius: 4px; background: var(--one);
           box-shadow: inset -3px -3px 0 var(--one-side), inset 2px 2px 0 rgba(255,255,255,.45); }
-  .cube.part { background: linear-gradient(to top, var(--one) var(--p), rgba(255,138,61,.15) var(--p));
-               box-shadow: inset 0 0 0 2px var(--one-side); }
+  .cube.part { height: max(3px, calc(18px * var(--f))); border-radius: 3px; }  /* a decimal piece: 0.5 is half a cube tall */
   .rod { display: grid; grid-template-rows: repeat(10, 1fr); width: 18px; height: 120px; border-radius: 5px; overflow: hidden;
          background: var(--ten); box-shadow: inset -3px 0 0 var(--ten-side); }
   .rod i { border-bottom: 1px solid rgba(0,0,0,.18); }
@@ -184,6 +183,8 @@
   .bot .window .rod i { border-bottom: 2px solid var(--ten-side); }
   .bot .window .rod i:last-child { border-bottom: none; }
   .bot .window .flat { width: 160px; height: 160px; }
+  .bot .window .cube.part { width: 56px; height: max(4px, calc(56px * var(--f))); border-radius: min(10px, calc(56px * var(--f) / 2));
+    border: 2px solid var(--one-side); box-sizing: border-box; box-shadow: inset -3px -3px 0 rgba(0,0,0,.15), inset 3px 3px 0 rgba(255,255,255,.45); }
   .bot .window .tower .cube { width: 56px; height: 56px; border-radius: 10px; border: 2px solid var(--one-side); box-sizing: border-box;
     box-shadow: inset -3px -3px 0 rgba(0,0,0,.15), inset 3px 3px 0 rgba(255,255,255,.45); }
   .bot .window .tower, .bot .window .tcol { gap: 6px; }
@@ -835,8 +836,7 @@
     addGroup(te, () => el('rod', '<i></i>'.repeat(10)), plural(te, 'ten'));
     addGroup(on, () => tower(on), uniform ? plural(on, 'cube') : plural(on, 'one'), true);
     if (frac > 0) {
-      addGroup(1, () => { const c = el('cube part'); c.style.setProperty('--p', Math.round(frac * 100) + '%'); return c; },
-        `a piece (${frac})`);
+      addGroup(1, () => { const c = el('cube part'); c.style.setProperty('--f', Math.min(frac, 0.99)); return c; }, pieceName(frac));
     }
     if (whole === 0 && frac === 0) wrap.appendChild(el('mini zero'));
     return wrap;
@@ -856,14 +856,18 @@
     if (tag) b.appendChild(el('tag' + (lbl ? ' lbl' : ''), tag));
     return b;
   }
+  // How to say a decimal piece: "half a cube", "a quarter of a cube", "0.3 of a cube".
+  function pieceName(f) {
+    return f === 0.5 ? 'half a cube' : f === 0.25 ? 'a quarter of a cube' : f === 0.75 ? 'three quarters of a cube' : `${f} of a cube`;
+  }
   function describe(v) {
     const a = Math.abs(v), whole = Math.floor(a + 1e-9), frac = Math.round((a - whole) * 100) / 100;
-    if (whole <= UNIFORM_MAX) return whole ? plural(whole, 'cube') + (frac ? ' + a piece' : '') : (frac ? 'a piece' : 'zero');
+    if (whole <= UNIFORM_MAX) return whole ? plural(whole, 'cube') + (frac ? ' + ' + pieceName(frac) : '') : (frac ? pieceName(frac) : 'zero');
     const parts = [];
     const th = Math.floor(whole / 1000), hu = Math.floor(whole / 100) % 10, te = Math.floor(whole / 10) % 10, on = whole % 10;
     if (th) parts.push(plural(th, 'thousand')); if (hu) parts.push(plural(hu, 'hundred'));
     if (te) parts.push(plural(te, 'ten')); if (on) parts.push(plural(on, 'one'));
-    if (frac) parts.push('a piece');
+    if (frac) parts.push(pieceName(frac));
     return parts.join(' + ') || 'zero';
   }
   // Shrink the scene to fit the screen if a big number makes it too wide/tall.
