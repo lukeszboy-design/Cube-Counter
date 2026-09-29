@@ -7,6 +7,16 @@ A kid-friendly calculator where every number is a friendly robot carrying its co
 - Press a number and a robot appears holding that many cubes, and a cheerful British voice says the number.
 - Robots dance in a sunny scene with rolling green hills, and the odd bird flies past.
 - Press **=** for a trumpet fanfare, confetti, and the answer shown as cubes, tens bars and hundreds squares, read out loud.
+- Watch the math happen: robots leap together to add, cubes pop away to take away, robots line up in groups to multiply, and a robot bursts into equal groups to divide.
+- Decimals are shown at their true size, so 0.5 is half a cube.
+
+## Challenge mode
+Tap **Challenge** at the top to practise. The robots show a problem with their cubes, the voice reads it out, and you type the answer and press **=**.
+
+- Pick a level: **+ to 10**, **+ − to 20**, **× groups** or **÷ sharing**.
+- A right answer plays the animation and earns a star. Get a few in a row for a streak.
+- A wrong answer gives a hint. After two tries, the robots work it out together.
+- Stars and your level are saved on that computer.
 
 ## Play it
 **In your browser:** https://lukeszboy-design.github.io/Cube-Counter/
