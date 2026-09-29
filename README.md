@@ -21,7 +21,7 @@ Tap **Challenge** at the top to practise. The robots show a problem with their c
 ## Prizes
 Stars from Challenge mode unlock prizes:
 
-- **Hats:** party hat (3 stars), crown (10), top hat (20), wizard hat (35), cowboy hat (50)
+- **Hats:** party hat (3 stars), crown (10), chef hat (18), top hat (20), pirate hat (28), wizard hat (35), cowboy hat (50), propeller cap (55)
 - **Robot colors:** orange (5), teal (13), silver (25), midnight (40), gold (60)
 - **Birds** that fly across the sky: red cardinal (8), yellow canary (16), bluebird (30), parrot (45)
 
