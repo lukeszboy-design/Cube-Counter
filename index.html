@@ -325,9 +325,10 @@
   // How the cubes stack: up to 5 in one column, 6–10 in two even columns,
   // then as few even columns as possible with no column taller than 10 (11 = 6 + 5, 21 = 7 + 7 + 7).
   const UNIFORM_MAX = 100; // whole numbers up to this are shown as same-size cubes (no ten-bars)
+  // In Challenge mode columns are at most 5 tall (like ten-frames), so every robot stays the same size as in "+ to 10".
   function colSizes(n) {
     if (n <= 5) return [n];
-    const k = n <= 10 ? 2 : Math.ceil(n / 10);
+    const k = challenge ? Math.ceil(n / 5) : n <= 10 ? 2 : Math.ceil(n / 10);
     const base = Math.floor(n / k), extra = n % k;
     return Array.from({ length: k }, (_, i) => base + (i < extra ? 1 : 0));
   }
@@ -938,9 +939,11 @@
   function fitScene(wrap, instant) {
     requestAnimationFrame(() => {
       const note = blocksEl.querySelector('.neg-note, .mathnote');
-      const w = blocksEl.clientWidth - 8, h = blocksEl.clientHeight - 40 - (note ? note.offsetHeight + 14 : 0);
-      let r = Math.min(1, w / wrap.scrollWidth, h / wrap.scrollHeight);
-      if (r < 16 / 18) r = Math.min(1, w / wrap.scrollWidth, (h - 28) / wrap.scrollHeight); // room for the enlarged labels
+      const w = blocksEl.clientWidth - 8, h = blocksEl.clientHeight - 16 - (note ? note.offsetHeight + 8 : 16);
+      // Challenge mode uses one fixed size: the size of a robot carrying a 5-cube column (as in "+ to 10").
+      const sh = challenge ? Math.max(wrap.scrollHeight, refHeight()) : wrap.scrollHeight;
+      let r = Math.min(1, w / wrap.scrollWidth, h / sh);
+      if (r < 16 / 18) r = Math.min(1, w / wrap.scrollWidth, (h - 28) / sh); // room for the enlarged labels
       if (instant) wrap.style.transition = 'none';
       // Keep the labels under the robots readable when the scene is shrunk to fit (at least about 16px on screen),
       // and lift the scene a little so the bigger labels don't hang off the bottom.
@@ -949,6 +952,14 @@
       wrap.style.setProperty('--tagk', k.toFixed(3));
       if (instant) requestAnimationFrame(() => { wrap.style.transition = ''; });
     });
+  }
+  // Height of a scene with one robot carrying a 5-cube column (measured once).
+  function refHeight() {
+    if (refHeight.v) return refHeight.v;
+    const probe = el('fit'); probe.style.cssText = 'position:absolute;visibility:hidden;left:0;top:0;transform:none';
+    probe.appendChild(makeBot(buildNumber(5, false), { tag: '5 cubes', lbl: true }));
+    blocksEl.appendChild(probe); refHeight.v = probe.scrollHeight; probe.remove();
+    return refHeight.v;
   }
   function scene(nodes, note) {
     blocksEl.innerHTML = '';
@@ -1187,7 +1198,7 @@
   }
 
   // ---------- modes ----------
-  let mode = 'calc', challenge = false, building = false;
+  var mode = 'calc', challenge = false, building = false; // var: colSizes and fitScene read these before this line runs
   const chbarEl = document.getElementById('chbar'), bbarEl = document.getElementById('bbar');
   function setMode(m) {
     if (animating) return;
@@ -1215,13 +1226,13 @@
     { id: 'pm20', label: '+ − to 20', make: () => {
         if (Math.random() < 0.5) { const a = rnd(2, 18), b = rnd(1, 20 - a); return [a, '+', b]; }
         const a = rnd(3, 20), b = rnd(1, a - 1); return [a, '-', b]; } },
-    { id: 'mul', label: '× groups', make: () => [rnd(2, 5), '*', rnd(1, 10)] },
-    { id: 'div', label: '÷ sharing', make: () => { const g = rnd(2, 5), each = rnd(1, 10); return [g * each, '/', g]; } },
+    { id: 'mul', label: '× groups', make: () => [rnd(2, 5), '*', rnd(1, 5)] },
+    { id: 'div', label: '÷ sharing', make: () => { const g = rnd(2, 5), each = rnd(1, 5); return [g * each, '/', g]; } },
     { id: 'miss', label: '? puzzles', make: () => {
         const f = rnd(0, 2);
-        if (f === 0) { const a = rnd(1, 9), x = rnd(1, 9); return { miss: true, parts: [a, '+', '?', '=', a + x], x, hint: `Hint: count on from ${a} up to ${a + x}!` }; }
-        if (f === 1) { const x = rnd(1, 9), b = rnd(1, 9); return { miss: true, parts: ['?', '+', b, '=', x + b], x, hint: `Hint: what goes with ${b} to make ${x + b}?` }; }
-        const a = rnd(3, 15), x = rnd(1, a - 1); return { miss: true, parts: [a, '-', '?', '=', a - x], x, hint: `Hint: ${a} take away what leaves ${a - x}?` }; } },
+        if (f === 0) { const a = rnd(1, 9), x = rnd(1, 10 - a); return { miss: true, parts: [a, '+', '?', '=', a + x], x, hint: `Hint: count on from ${a} up to ${a + x}!` }; }
+        if (f === 1) { const b = rnd(1, 9), x = rnd(1, 10 - b); return { miss: true, parts: ['?', '+', b, '=', x + b], x, hint: `Hint: what goes with ${b} to make ${x + b}?` }; }
+        const a = rnd(3, 10), x = rnd(1, a - 1); return { miss: true, parts: [a, '-', '?', '=', a - x], x, hint: `Hint: ${a} take away what leaves ${a - x}?` }; } },
   ];
   const ch = { level: LEVELS.some(L => L.id === store.get('level', 'add10')) ? store.get('level', 'add10') : 'add10', stars: starCount(), streak: 0, q: null, guess: '', tries: 0, done: false, lastKey: '', prize: null };
 
@@ -1256,7 +1267,7 @@
         if (t === '?') { const b = makeBot(el('mystery', '?'), { idx: idx++, tag: '?' }); b.classList.add('mysterybot'); return b; }
         return el('opsign', SIGN(t));
       }));
-      chNote('Which number is missing? Type it, then press <b>=</b>');
+      chNote('Find the missing number, then press <b>=</b>');
       speak(['q_missing', ...q.parts.flatMap(partClips)], 'Which number is missing? ' + q.parts.map(partWords).join(' '), 0.08);
       return;
     }
@@ -1264,7 +1275,7 @@
     ch.q = { a, op, b, answer: evaluate([String(a), op, String(b)]).value };
     exprEl.textContent = a + ' ' + OPS[op] + ' ' + b + ' = ?';
     showExpression([String(a), op, String(b)]);
-    chNote('How many? Type the answer, then press <b>=</b>');
+    chNote('Type the answer, then press <b>=</b>');
     speak(['q_ask', ...numberClips(a), OP_CLIPS[op], ...numberClips(b)], `Can you solve this one? ${a} ${{ '+': 'plus', '-': 'minus', '*': 'times', '/': 'divided by' }[op]} ${b}`, 0.08);
   }
   function chNote(html) {
