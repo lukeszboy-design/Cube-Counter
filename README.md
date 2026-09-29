@@ -1,3 +1,5 @@
+<img src="icon.png" width="160" alt="Cube Counters! app icon: a smiling green robot on green hills with plus, minus, times and divide bubbles">
+
 # Cube Counters!
 
 A kid-friendly calculator where every number is a friendly robot carrying its counting cubes.
@@ -9,7 +11,7 @@ A kid-friendly calculator where every number is a friendly robot carrying its co
 ## Play it
 **In your browser:** https://lukeszboy-design.github.io/Cube-Counter/
 
-## Download the app (version 1.1)
+## Download the app (version 1.1.1)
 - **Windows:** [CubeCounters.exe](https://github.com/lukeszboy-design/Cube-Counter/releases/latest/download/CubeCounters.exe)
 - **Mac with Apple chip (M1 or newer):** [CubeCounters-mac-AppleSilicon.zip](https://github.com/lukeszboy-design/Cube-Counter/releases/latest/download/CubeCounters-mac-AppleSilicon.zip)
 - **Older Intel Mac:** [CubeCounters-mac-Intel.zip](https://github.com/lukeszboy-design/Cube-Counter/releases/latest/download/CubeCounters-mac-Intel.zip)
