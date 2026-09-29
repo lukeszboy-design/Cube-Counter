@@ -102,11 +102,9 @@
   .bird { position: absolute; left: 0; z-index: 0; pointer-events: none; will-change: transform;
           animation: fly var(--dur, 11s) linear forwards; }
   .bird .bob { animation: birdbob 1.6s ease-in-out infinite; }
-  .bird svg { display: block; width: 44px; height: 21px; overflow: visible; }
-  .bird .wings { transform-origin: 50% 70%; animation: flap .32s ease-in-out infinite alternate; }
+  .bird svg { display: block; width: 44px; height: 22px; overflow: visible; }
   @keyframes fly { from { transform: translateX(var(--from)) scaleX(var(--dir)); } to { transform: translateX(var(--to)) scaleX(var(--dir)); } }
   @keyframes birdbob { 50% { transform: translateY(-7px); } }
-  @keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-0.55); } }
   @media (prefers-reduced-motion: reduce) { .bird { display: none; } }
   .stage .bot .tag:not(.lbl) { background: rgba(255,255,255,.85); padding: 1px 10px; border-radius: 10px; }
   .stage .opsign { text-shadow: 0 2px 0 #fff, 0 0 8px #fff; }
@@ -1028,8 +1026,17 @@
     b.style.setProperty('--dir', ltr ? 1 : -1);
     b.style.setProperty('--dur', (9 + Math.random() * 5).toFixed(1) + 's');
     const shade = ['#3b4a6b', '#4a5578', '#2f3d5c'][Math.floor(Math.random() * 3)];
-    b.innerHTML = '<div class="bob"><svg viewBox="0 0 34 16"><path class="wings" d="M1 6 Q9 -2 17 9 Q25 -2 33 6" fill="none" stroke="' + shade +
-      '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    // Wings flap by bending at the shoulders: up, level, down and back (the body stays put).
+    const UP = 'M2 1 Q10 2 17 8 Q24 2 32 1', MID = 'M1 7 Q9 2 17 8 Q25 2 33 7', DOWN = 'M5 15 Q10 8 17 8 Q24 8 29 15';
+    const flapDur = (0.42 + Math.random() * 0.12).toFixed(2) + 's';
+    b.innerHTML = '<div class="bob"><svg viewBox="0 0 34 17">' +
+      '<path d="' + MID + '" fill="none" stroke="' + shade + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+      '<animate attributeName="d" dur="' + flapDur + '" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3;0.55;0.8;1" ' +
+      'keySplines=".4 0 .6 1;.4 0 .6 1;.4 0 .6 1;.4 0 .6 1" values="' + [UP, MID, DOWN, MID, UP].join(';') + '"/></path>' +
+      '<ellipse cx="17" cy="8.6" rx="4.6" ry="2.3" fill="' + shade + '"/>' +
+      '<circle cx="21.6" cy="7.6" r="1.9" fill="' + shade + '"/>' +
+      '<path d="M23.2 7.2 L25.6 7.9 L23.2 8.5 Z" fill="#f59f00"/>' +
+      '<path d="M13 8.2 L9.6 6.8 L9.8 10.4 Z" fill="' + shade + '"/></svg></div>';
     b.addEventListener('animationend', e => { if (e.animationName === 'fly') b.remove(); });
     stageEl.appendChild(b);
   }
