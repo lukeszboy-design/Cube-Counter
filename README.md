@@ -22,4 +22,4 @@ The apps load the newest version of the website each time they open, and use a b
 - Windows: if you see "Windows protected your PC", click **More info**, then **Run anyway**.
 - Mac: unzip, drag the app into Applications, then right-click it and choose **Open**, then **Open** again.
 
-Voice recorded with [Kokoro](https://github.com/hexgrad/kokoro), an open-source text-to-speech model.
+Voice recorded with [Chatterbox](https://github.com/resemble-ai/chatterbox) by Resemble AI, an open-source (MIT) text-to-speech model, using a British voice made with [Kokoro](https://github.com/hexgrad/kokoro) as the voice sample.
