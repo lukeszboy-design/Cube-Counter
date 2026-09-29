@@ -116,6 +116,7 @@
   .fit > * { flex-shrink: 0; }
   .fit { width: max-content; }
   .bot .window .items { max-width: 300px; }
+  .bot .window .items:has(.tower) { max-width: none; flex-wrap: nowrap; }
   .confetti { position: fixed; top: -12px; width: 10px; height: 14px; border-radius: 2px; z-index: 50; pointer-events: none; animation: fall 2s ease-in both; }
   @keyframes fall { to { transform: translate(var(--x), 105vh) rotate(var(--r)); } }
   .fit { display: flex; flex-wrap: nowrap; align-items: flex-end; justify-content: center; gap: 12px; transform-origin: bottom center; }
@@ -258,10 +259,14 @@
   const btnMap = {};
 
   // Columns of cubes: up to 5 tall = 1 column; 6–9 = 2 balanced columns (8 = 4 + 4).
+  // How the cubes stack: up to 5 in one column, 6–10 in two even columns,
+  // then as few even columns as possible with no column taller than 10 (11 = 6 + 5, 21 = 7 + 7 + 7).
+  const UNIFORM_MAX = 100; // whole numbers up to this are shown as same-size cubes (no ten-bars)
   function colSizes(n) {
     if (n <= 5) return [n];
-    const h = Math.ceil(n / 2);
-    return [h, n - h];
+    const k = n <= 10 ? 2 : Math.ceil(n / 10);
+    const base = Math.floor(n / k), extra = n % k;
+    return Array.from({ length: k }, (_, i) => base + (i < extra ? 1 : 0));
   }
   // Button cubes come in mixed colors, like a tub of classroom linking cubes.
   const MINI_COLORS = ['#ffd23f', '#ff6b6b', '#4dabf7', '#69db7c', '#ff922b', '#f783ac', '#b197fc', '#3bc9db', '#ffffff'];
@@ -621,7 +626,7 @@
     await wait(700);
     await jumpTogether(copies);
     await wait(380);
-    showBlocks(result, null, { idx: 2, groups: result <= 9 ? b : null, note: `${a} × ${b} = <b>${result}</b>` });
+    showBlocks(result, null, { idx: 2, groups: result <= UNIFORM_MAX ? b : null, note: `${a} × ${b} = <b>${result}</b>` });
     const nb = blocksEl.querySelector('.bot');
     if (nb) await popIn(nb);
   }
@@ -637,7 +642,7 @@
     blocksEl.insertBefore(noteEl(`${a} shared into <b>${b}</b> group${b === 1 ? '' : 's'}`), blocksEl.firstChild);
     // Color A's cubes by the group they will go to.
     const cubes = [...A.querySelectorAll('.window .tower .cube')];
-    if (a <= 9) for (let i = 0; i < cubes.length; i++) { paintCube(cubes[i], Math.floor(i / result)); beep(500 + i * 40, .06, 'triangle'); await wait(90); }
+    if (a <= UNIFORM_MAX) { const pace = Math.max(12, Math.min(90, 900 / a)); for (let i = 0; i < cubes.length; i++) { paintCube(cubes[i], Math.floor(i / result)); if (i % Math.ceil(a / 12) === 0) beep(500 + Math.min(i, 20) * 30, .06, 'triangle'); await wait(pace); } }
     await wait(350);
     sweep(150, 90, .5, 'sawtooth', .05);
     await A.animate([{ transform: 'none' }, { transform: 'translateX(-6px) rotate(-3deg)' }, { transform: 'translateX(6px) rotate(3deg)' },
@@ -715,7 +720,7 @@
                        B.animate(jump(db), { duration: 1050, fill: 'forwards' }).finished]);
     poofAt(midX, midY); poofSound();
     await wait(380);
-    showBlocks(result, null, { idx: 2, splitAt: result <= 9 ? a : null });
+    showBlocks(result, null, { idx: 2, splitAt: result <= UNIFORM_MAX ? a : null });
     const nb = blocksEl.querySelector('.bot');
     if (nb) await popIn(nb);
   }
@@ -729,7 +734,7 @@
                      { transform: 'translate(50px,-46px) rotate(6deg)', opacity: 1, offset: .5, easing: 'cubic-bezier(.5,0,.8,.5)' },
                      { transform: 'translate(150px,30px) rotate(14deg) scale(.6)', opacity: 0 }], { duration: 850, fill: 'forwards' }).finished;
     const ones = [...A.querySelectorAll('.window .tower .cube')];
-    const onesVal = a % 10, canPop = b < 10 && onesVal >= b;
+    const canPop = a <= UNIFORM_MAX ? b <= ones.length : (b < 10 && a % 10 >= b);
     const s = sceneScale(A);
     if (canPop) {
       const going = ones.slice(ones.length - b).reverse();
@@ -740,8 +745,8 @@
         const c = going[i], dx = (Math.random() * 140 - 70) / s, rot = Math.random() * 540 - 270;
         c.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx * .4}px,${-70 / s}px) scale(1.25) rotate(${rot * .3}deg)`, opacity: 1, offset: .35 },
                    { transform: `translate(${dx}px,${-40 / s}px) scale(.3) rotate(${rot}deg)`, opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' });
-        sweep(500 + i * 90, 1200 + i * 90, .12, 'sine', .14);
-        await wait(Math.max(110, 260 - b * 15));
+        sweep(500 + Math.min(i, 12) * 90, 1200 + Math.min(i, 12) * 90, .12, 'sine', .14);
+        if (i % Math.ceil(b / 15) === 0 || b <= 15) await wait(Math.max(60, 260 - b * 15));
       }
       await wait(600);
     } else {
@@ -792,9 +797,10 @@
   function tower(n) {
     const t = el('tower');
     let d = 0;
+    const step = Math.max(0.008, Math.min(0.05, 0.9 / n)); // whole tower lands within about a second
     for (const c of colSizes(n)) {
       const col = el('tcol');
-      for (let i = 0; i < c; i++) { const q = el('cube appear'); q.style.animationDelay = (d += 0.05) + 's'; col.appendChild(q); }
+      for (let i = 0; i < c; i++) { const q = el('cube appear'); q.style.animationDelay = (d += step) + 's'; col.appendChild(q); }
       t.appendChild(col);
     }
     return t;
@@ -806,8 +812,9 @@
     const neg = v < 0, a = Math.abs(v);
     const whole = Math.floor(a + 1e-9);
     const frac = Math.round((a - whole) * 100) / 100;
-    const th = Math.floor(whole / 1000), hu = Math.floor(whole / 100) % 10,
-          te = Math.floor(whole / 10) % 10, on = whole % 10;
+    const uniform = whole <= UNIFORM_MAX;
+    const th = uniform ? 0 : Math.floor(whole / 1000), hu = uniform ? 0 : Math.floor(whole / 100) % 10,
+          te = uniform ? 0 : Math.floor(whole / 10) % 10, on = uniform ? whole : whole % 10;
     let delay = 0;
     const addGroup = (count, make, label, single) => {
       if (!count) return;
@@ -826,7 +833,7 @@
     else addGroup(th, () => el('big', '<b></b>'), plural(th, 'thousand'));
     addGroup(hu, () => el('flat', '<i></i>'.repeat(100)), plural(hu, 'hundred'));
     addGroup(te, () => el('rod', '<i></i>'.repeat(10)), plural(te, 'ten'));
-    addGroup(on, () => tower(on), plural(on, 'one'), true);
+    addGroup(on, () => tower(on), uniform ? plural(on, 'cube') : plural(on, 'one'), true);
     if (frac > 0) {
       addGroup(1, () => { const c = el('cube part'); c.style.setProperty('--p', Math.round(frac * 100) + '%'); return c; },
         `a piece (${frac})`);
@@ -851,6 +858,7 @@
   }
   function describe(v) {
     const a = Math.abs(v), whole = Math.floor(a + 1e-9), frac = Math.round((a - whole) * 100) / 100;
+    if (whole <= UNIFORM_MAX) return whole ? plural(whole, 'cube') + (frac ? ' + a piece' : '') : (frac ? 'a piece' : 'zero');
     const parts = [];
     const th = Math.floor(whole / 1000), hu = Math.floor(whole / 100) % 10, te = Math.floor(whole / 10) % 10, on = whole % 10;
     if (th) parts.push(plural(th, 'thousand')); if (hu) parts.push(plural(hu, 'hundred'));
