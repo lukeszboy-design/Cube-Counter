@@ -8,15 +8,33 @@ A kid-friendly calculator where every number is a friendly robot carrying its co
 - Robots dance in a sunny scene with rolling green hills, and the odd bird flies past.
 - Press **=** for a trumpet fanfare, confetti, and the answer shown as cubes, tens bars and hundreds squares, read out loud.
 - Watch the math happen: robots leap together to add, cubes pop away to take away, robots line up in groups to multiply, and a robot bursts into equal groups to divide.
+- **Make a ten:** for sums like 8 + 5, cubes hop over to fill the bigger robot up to 10 first, so 8 + 5 becomes 10 + 3.
 - Decimals are shown at their true size, so 0.5 is half a cube.
 
 ## Challenge mode
 Tap **Challenge** at the top to practise. The robots show a problem with their cubes, the voice reads it out, and you type the answer and press **=**.
 
-- Pick a level: **+ to 10**, **+ − to 20**, **× groups** or **÷ sharing**.
+- Pick a level: **+ to 10**, **Make 10**, **+ − to 20**, **× groups**, **÷ sharing** or **? puzzles**.
+- **? puzzles** are missing-number problems like 5 + ? = 8. One robot has an empty window, and it fills with cubes when you find the number.
 - A right answer plays the animation and earns a star. Get a few in a row for a streak.
 - A wrong answer gives a hint. After two tries, the robots work it out together.
-- Stars and your level are saved on that computer.
+
+## Prizes
+Stars from Challenge mode unlock prizes:
+
+- **Hats:** party hat (3 stars), crown (10), top hat (20), wizard hat (35), cowboy hat (50)
+- **Robot colors:** orange (5), teal (13), silver (25), midnight (40), gold (60)
+- **Birds** that fly across the sky: red cardinal (8), yellow canary (16), bluebird (30), parrot (45)
+
+## Build a Robot
+Tap **Build a Robot** to design your own robot:
+
+- Choose how many cubes it carries (0 to 100). Type a number, or press **+** and **−** one cube at a time.
+- Pick the robot's color, a hat, and the color of its bricks, including rainbow bricks.
+- Prizes you haven't earned yet show how many stars they need.
+- Press **=** to show off your robot.
+
+Stars, prizes, your level and your robot are saved on that computer.
 
 ## Play it
 **In your browser:** https://lukeszboy-design.github.io/Cube-Counter/
