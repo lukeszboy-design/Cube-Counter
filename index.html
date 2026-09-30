@@ -280,6 +280,16 @@
     .bbar button.opt { width: 25px; height: 25px; } .opt .sw { width: 17px; height: 17px; } .opt .mh { width: 18px; height: 17px; }
     .modes button.mode { padding: 6px 10px; font-size: 16px; }
   }
+  /* The stacked layout needs about 900px of height. When the window is shorter than that (Chromebooks, laptops,
+     tablets turned sideways) and wide enough, put the robot screen on the left and the keypad on the right. */
+  @media (max-height: 899px) and (min-width: 720px) {
+    body { padding-block: 8px; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    .modes { margin-bottom: 8px; }
+    .calc { max-width: 1180px; flex-direction: row; gap: 18px; align-items: center; }
+    .screen { min-height: 0; align-self: stretch; }
+    .keys { flex: 0 0 360px; width: 360px; height: min(470px, calc(100vh - 110px)); min-height: 250px; }
+  }
   .flystar { position: fixed; z-index: 50; font-size: 34px; color: #ffd23f; pointer-events: none; text-shadow: 0 2px 0 #e0a800; }
 </style>
 </head>
@@ -1488,6 +1498,10 @@
     }
     beep(220, .08);
   }
+
+  // Refit the robots when the window is resized or turned (for example switching to the side-by-side layout).
+  let resizeT;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { const w = blocksEl.querySelector('.fit'); if (w) fitScene(w, true); }, 120); });
 
   // ---------- keyboard ----------
   const keyAlias = { 'Enter': '=', '=': '=', 'Backspace': 'back', 'Escape': 'C', 'c': 'C', 'C': 'C', 'x': '*', 'X': '*' };
