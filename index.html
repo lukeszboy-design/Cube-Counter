@@ -273,9 +273,12 @@
   .opt .sw { width: 19px; height: 19px; border-radius: 50%; border: 3px solid; box-sizing: border-box; }
   .opt .sw.sq { border-radius: 5px; border-color: transparent; }
   .opt .mh { width: 21px; height: 19px; display: block; } .opt .mh svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .bbar button.opt.fill { border-radius: 8px; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.18), inset 0 0 0 2px #c4b5fd; }
+  .opt .bk { width: 22px; height: 22px; display: block; } .opt .bk svg { display: block; width: 100%; height: 100%; }
+  .screen.building .window .tower .cube { cursor: pointer; }
   .opt .nohat { width: 16px; height: 16px; border: 2.5px solid #a78bfa; border-radius: 50%; position: relative; }
   .opt .nohat::after { content: ""; position: absolute; left: 50%; top: -2px; width: 2.5px; height: 16px; background: #a78bfa; transform: translateX(-50%) rotate(45deg); }
-  @media (max-width: 470px) {
+  @media (max-width: 540px) {
     .brow { gap: 3px; } .brow b { display: none; }
     .bbar button.opt { width: 25px; height: 25px; } .opt .sw { width: 17px; height: 17px; } .opt .mh { width: 18px; height: 17px; }
     .modes button.mode { padding: 6px 10px; font-size: 16px; }
@@ -1401,13 +1404,26 @@
 
   // ---------- build a robot ----------
   // Pick how many cubes, the robot's color, a hat and the brick color. Locked choices are earned with Challenge stars.
+  // Each cube has its own color (bd.colors, one GROUP_COLORS index per cube). bd.brush is the paintbrush color:
+  // tap a brick color to pick it up, tap a cube to paint it, or use the bucket (all cubes) or rainbow (all cubes, mixed).
   const bd = Object.assign({ n: 5, color: 'green', hat: 'none', brick: 'b0' }, store.get('design', {}));
-  let bdTyped = '';
-  const saveDesign = () => store.set('design', { n: bd.n, color: bd.color, hat: bd.hat, brick: bd.brick });
-  function paintBricks(bot) {
+  if (!Array.isArray(bd.colors)) { // designs saved before single-cube painting: one color (or rainbow) for every cube
     const br = BRICKS.find(x => x.id === bd.brick) || BRICKS[0];
-    bot.querySelectorAll('.window .tower .cube').forEach((c, i) => paintCube(c, br.rainbow ? i : br.g));
+    bd.colors = Array.from({ length: bd.n }, (_, i) => br.rainbow ? i % GROUP_COLORS.length : br.g);
   }
+  if (typeof bd.brush !== 'number') { const br = BRICKS.find(x => x.id === bd.brick); bd.brush = br && !br.rainbow ? br.g : 0; }
+  let bdTyped = '';
+  const saveDesign = () => store.set('design', { n: bd.n, color: bd.color, hat: bd.hat, colors: bd.colors, brush: bd.brush });
+  function fitColors() { // keep one color per cube; new cubes get the brush color
+    bd.colors = bd.colors.slice(0, bd.n);
+    while (bd.colors.length < bd.n) bd.colors.push(bd.brush);
+  }
+  function paintBricks(bot) {
+    fitColors();
+    bot.querySelectorAll('.window .tower .cube').forEach((c, i) => paintCube(c, bd.colors[i] ?? bd.brush));
+  }
+  const bucketSVG = g => '<svg viewBox="0 0 24 24"><path d="M5 9 L12 4 L19 9 L17 20 Q12 22 7 20 Z" fill="' + GROUP_COLORS[g][0] + '" stroke="#475569" stroke-width="1.6" stroke-linejoin="round"/>' +
+    '<path d="M5 9 Q12 13 19 9" fill="none" stroke="#475569" stroke-width="1.6"/><path d="M19 9 Q22 12 21 15 Q20 17 19 15" fill="' + GROUP_COLORS[g][0] + '" stroke="#475569" stroke-width="1.2"/></svg>';
   function styleBot(bot) {
     const col = ROBOT_COLORS.find(x => x.id === bd.color) || ROBOT_COLORS[0];
     bot.style.setProperty('--c', col.c); bot.style.setProperty('--cd', col.cd);
@@ -1435,14 +1451,41 @@
     bbarEl.querySelectorAll('.mh svg').forEach(svg => {
       try { const b = svg.getBBox(); if (b.width) { const pad = 2; svg.setAttribute('viewBox', `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); } } catch (e) {}
     });
-    row('Bricks', BRICKS, bd.brick, 'brick', it => '<span class="sw sq" style="' + (it.rainbow ? 'background:conic-gradient(#ff6b6b,#ffd23f,#69db7c,#4dabf7,#b197fc,#ff6b6b)' :
+    row('Bricks', BRICKS, 'b' + bd.brush, 'brick', it => '<span class="sw sq" style="' + (it.rainbow ? 'background:conic-gradient(#ff6b6b,#ffd23f,#69db7c,#4dabf7,#b197fc,#ff6b6b)' :
       'background:' + GROUP_COLORS[it.g][0] + ';border-color:' + GROUP_COLORS[it.g][1]) + '"></span>');
+    const rows = bbarEl.querySelectorAll('.brow'), brickRow = rows[rows.length - 1];
+    const rb = brickRow.lastElementChild; rb.title = 'Rainbow: every cube a different color';
+    const fill = document.createElement('button');
+    fill.className = 'opt fill'; fill.title = 'Fill every cube with this color'; fill.innerHTML = '<span class="bk">' + bucketSVG(bd.brush) + '</span>';
+    fill.addEventListener('click', () => fillAll(false));
+    brickRow.appendChild(fill);
   }
+  function fillAll(rainbow) {
+    if (animating) return;
+    bd.colors = Array.from({ length: bd.n }, (_, i) => rainbow ? i % GROUP_COLORS.length : bd.brush); saveDesign();
+    const bot = buildBot(); if (!bot) return;
+    const cubes = [...bot.querySelectorAll('.window .tower .cube')];
+    paintBricks(bot);
+    cubes.forEach((c, i) => c.animate([{ transform: 'none' }, { transform: 'scale(1.18)', offset: .4 }, { transform: 'none' }], { duration: 320, delay: Math.min(i * 25, 700) }));
+    sweep(500, 1100, .3, 'triangle', .1);
+  }
+  // Tap a cube on the robot to paint just that cube with the brush color.
+  blocksEl.addEventListener('click', e => {
+    if (!building || animating) return;
+    const c = e.target.closest('.window .tower .cube'); if (!c) return;
+    const i = [...blocksEl.querySelectorAll('.window .tower .cube')].indexOf(c); if (i < 0) return;
+    fitColors(); bd.colors[i] = bd.brush; saveDesign(); paintCube(c, bd.brush);
+    c.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25, .8)', offset: .35 }, { transform: 'scale(.95, 1.06)', offset: .7 }, { transform: 'none' }], { duration: 300 });
+    beep(620 + bd.brush * 50, .07, 'triangle');
+  });
   function pickOption(key, it, ok) {
     if (animating) return;
     const bot = buildBot();
     if (!ok) { buddy('hop', 'Earn ★' + it.stars + ' in Challenge!', 1800); beep(260, .12, 'triangle'); return; }
-    bd[key] = it.id; saveDesign(); drawBuildBar();
+    if (key === 'brick') {
+      if (it.rainbow) { fillAll(true); return; }
+      bd.brush = it.g; saveDesign(); drawBuildBar();
+    } else { bd[key] = it.id; saveDesign(); drawBuildBar(); }
     if (!bot) return;
     if (key === 'color') { styleBot(bot); bot.animate([{ transform: 'none' }, { transform: 'scale(1.06,.94)', offset: .35 }, { transform: 'none' }], { duration: 360 }); beep(700, .08, 'triangle'); }
     if (key === 'hat') {
@@ -1451,12 +1494,7 @@
                        { duration: 520, easing: 'cubic-bezier(.3,.7,.4,1)' });
       hopAnim(bot, 14, 300); sweep(900, 500, .2, 'triangle', .1);
     }
-    if (key === 'brick') {
-      const cubes = [...bot.querySelectorAll('.window .tower .cube')];
-      paintBricks(bot);
-      cubes.forEach((c, i) => c.animate([{ transform: 'none' }, { transform: 'scale(1.18)', offset: .4 }, { transform: 'none' }], { duration: 320, delay: Math.min(i * 25, 700) }));
-      beep(820, .08, 'triangle');
-    }
+    if (key === 'brick') beep(820, .08, 'triangle');
   }
   function enterBuild() {
     bdTyped = '';
@@ -1465,7 +1503,7 @@
     ansEl.textContent = bd.n;
     const bot = makeBot(numberContent(bd.n), { tag: buildTag(), lbl: true });
     scene([bot]); styleBot(bot);
-    chNote('Type a number, or press <b>+</b> <b>−</b>');
+    chNote('Tap a cube to paint it');
     speak(['b_hi'], "Let's build a robot!");
   }
   function setCount(n) {
