@@ -13,7 +13,8 @@ A kid-friendly calculator where every number is a friendly robot carrying its co
 ## Challenge mode
 Tap **Challenge** at the top to practise. The robots show a problem with their cubes, the voice reads it out, and you type the answer and press **=**.
 
-- Pick a level: **+ to 10**, **+ − to 20**, **× groups**, **÷ sharing** or **? puzzles**.
+- Pick a level: **+ − to 10**, **+ − to 20**, **× groups**, **÷ sharing** or **? puzzles**.
+- Turn on the **5-second timer** to race the clock on any level. The countdown starts after the voice reads the problem; if time runs out, the robots work it out together.
 - **? puzzles** are missing-number problems like 5 + ? = 8. One robot has an empty window, and it fills with cubes when you find the number.
 - A right answer plays the animation and earns a star. Get a few in a row for a streak.
 - A wrong answer gives a hint. After two tries, the robots work it out together.
