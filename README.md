@@ -29,7 +29,8 @@ Stars from Challenge mode unlock prizes:
 Tap **Build a Robot** to design your own robot:
 
 - Choose how many cubes it carries (0 to 100). Type a number, or press **+** and **−** one cube at a time.
-- Pick the robot's color, a hat, and the color of its bricks, including rainbow bricks.
+- Pick the robot's color and a hat.
+- Color the bricks: tap a color to pick it up, then tap any cube to paint just that one. The bucket paints every cube in that color, and the rainbow cube gives every cube a different color.
 - Prizes you haven't earned yet show how many stars they need.
 - Press **=** to show off your robot.
 
