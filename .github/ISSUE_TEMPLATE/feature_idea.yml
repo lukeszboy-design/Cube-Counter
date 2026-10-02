@@ -1,0 +1,22 @@
+name: Feature idea
+description: An idea for something new or better in Cube Counters
+title: "Idea: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What's the idea?
+      description: Describe what you'd like Cube Counters to do.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+      description: How would it help kids play or learn?
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Sketches, examples or links.
