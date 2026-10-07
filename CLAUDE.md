@@ -6,12 +6,14 @@ A kid-friendly calculator where every number is a friendly robot carrying counti
 The players are young kids. Keep everything simple, friendly and safe: big tap targets, short cheerful words, no scary or negative messages, no ads, links out or data collection. Wrong answers get gentle hints, never a "fail" feel.
 
 ## How the project is laid out
-- **The whole app is a single file: `index.html`.** All HTML, CSS and JavaScript live there, with no build step and no dependencies.
-- `index.html` is about 2.6 MB because assets are embedded inline. Don't read or rewrite these lines whole; search around them:
-  - lines 7–8: favicon and apple-touch-icon as base64 PNGs
-  - lines 10–11: the Fredoka font as base64 woff2
-  - line 328: `<script id="voice-data">`, a JSON map of base64 MP3 voice clips (British voice, made with Chatterbox)
-- The app code is the `<script>` that follows `voice-data`.
+- **The app is `index.html`.** All HTML, CSS and JavaScript live there, with no build step and no dependencies.
+- `index.html` is about 190 KB, with some assets embedded inline. Don't read or rewrite these lines whole; search around them:
+  - lines 19–20: favicon and apple-touch-icon as base64 PNGs
+  - lines 22–23: the Fredoka font as base64 woff2
+- `voice.json` (about 2.4 MB) is a JSON map of base64 MP3 voice clips (British voice, made with Chatterbox). The page fetches it after it appears. If the page has an inline `<script id="voice-data">` block, that wins, which keeps older offline copies working. Never read `voice.json` whole.
+- The `<head>` holds the search and social tags (title, description, canonical, Open Graph, JSON-LD). The `.about` section sits just below the first screen for search engines and grown-ups, and is hidden in the desktop apps (`.is-app` on `<body>`, set from an Electron user-agent check).
+- The app code is the large `<script>` near the end of `<body>`.
+- `robots.txt` and `sitemap.xml` are for search engines. Update `lastmod` in `sitemap.xml` when the page changes a lot.
 - `icon.png` is the app icon used by README.md.
 - `CNAME` holds the custom domain.
 
@@ -19,6 +21,7 @@ The players are young kids. Keep everything simple, friendly and safe: big tap t
 - Hosted on GitHub Pages at **cubecounters.com**. Pushing to `main` publishes it.
 - **Never edit or delete the `CNAME` file.** It's what keeps cubecounters.com pointed at the site.
 - The Windows and Mac download apps load the live website, so a broken push breaks them too.
+- Push `voice.json` before an `index.html` that depends on it. Any app rebuild must bundle `voice.json` next to `index.html`.
 
 ## Saved progress (don't break it)
 Progress is saved in `localStorage` through the `store` helper in `index.html` (`store.get` / `store.set`), with every key prefixed `cc.`:
