@@ -38,7 +38,7 @@ Tap **Build a Robot** to design your own robot:
 Stars, prizes, your level and your robot are saved on that computer.
 
 ## Play it
-**In your browser:** https://lukeszboy-design.github.io/Cube-Counter/
+**In your browser:** https://cubecounters.com/
 
 ## Download the app (version 1.1.1)
 - **Windows:** [CubeCounters.exe](https://github.com/lukeszboy-design/Cube-Counter/releases/latest/download/CubeCounters.exe)
